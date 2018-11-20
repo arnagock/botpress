@@ -7,7 +7,7 @@ import { UnlicensedError } from 'errors'
 import express from 'express'
 import rewrite from 'express-urlrewrite'
 import { createServer, Server } from 'http'
-import { inject, injectable, tagged } from 'inversify'
+import { inject, injectable, postConstruct, tagged } from 'inversify'
 import path from 'path'
 import portFinder from 'portfinder'
 
@@ -16,6 +16,7 @@ import { ModuleLoader } from './module-loader'
 import { BotRepository } from './repositories'
 import { AdminRouter, AuthRouter, BotsRouter, ModulesRouter } from './routers'
 import { ContentRouter } from './routers/bots/content'
+import { TalkRouter } from './routers/bots/talk'
 import { VersioningRouter } from './routers/bots/versioning'
 import { ShortLinksRouter } from './routers/shortlinks'
 import { GhostService } from './services'
@@ -29,6 +30,7 @@ import { SkillService } from './services/dialog/skill/service'
 import { LogsService } from './services/logs/service'
 import MediaService from './services/media'
 import { NotificationsService } from './services/notification/service'
+import { TalkService } from './services/talk-service'
 import { TYPES } from './types'
 const BASE_API_PATH = '/api/v1'
 
@@ -46,6 +48,8 @@ export default class HTTPServer {
   private readonly modulesRouter: ModulesRouter
   private readonly shortlinksRouter: ShortLinksRouter
   private readonly versioningRouter: VersioningRouter
+
+  private talkRouter: TalkRouter | undefined
 
   constructor(
     @inject(TYPES.ConfigProvider) private configProvider: ConfigProvider,
@@ -65,7 +69,8 @@ export default class HTTPServer {
     @inject(TYPES.NotificationsService) notificationService: NotificationsService,
     @inject(TYPES.SkillService) skillService: SkillService,
     @inject(TYPES.GhostService) ghostService: GhostService,
-    @inject(TYPES.LicensingService) licenseService: LicensingService
+    @inject(TYPES.LicensingService) licenseService: LicensingService,
+    @inject(TYPES.TalkService) private talkService: TalkService
   ) {
     this.app = express()
 
@@ -92,8 +97,15 @@ export default class HTTPServer {
     })
     this.contentRouter = new ContentRouter(this.adminService, this.authService, cmsService)
     this.versioningRouter = new VersioningRouter(this.adminService, this.authService, ghostService)
+
     this.botsRouter.router.use('/content', this.contentRouter.router)
     this.botsRouter.router.use('/versioning', this.versioningRouter.router)
+  }
+
+  @postConstruct()
+  async initAsync() {
+    this.talkRouter = new TalkRouter(this.talkService)
+    this.botsRouter.router.use('/talk', this.talkRouter.router)
   }
 
   resolveAsset = file => path.resolve(process.PROJECT_LOCATION, 'assets', file)

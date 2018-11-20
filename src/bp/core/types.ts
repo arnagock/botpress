@@ -61,7 +61,8 @@ const TYPES = {
   AppLifecycle: Symbol.for('AppLifecycle'),
   AuthRolesRepository: Symbol.for('AuthRolesRepository'),
   Statistics: Symbol.for('Statistics'),
-  StateManager: Symbol.for('StateManager')
+  StateManager: Symbol.for('StateManager'),
+  TalkService: Symbol.for('TalkService')
 }
 
 export { TYPES }

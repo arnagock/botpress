@@ -22,6 +22,7 @@ import { NotificationsService } from './notification/service'
 import { Queue } from './queue'
 import MemoryQueue from './queue/memory-queue'
 import RealtimeService from './realtime'
+import { TalkService } from './talk-service'
 
 const ServicesContainerModule = new ContainerModule((bind: interfaces.Bind) => {
   bind<CMS>(TYPES.CMS)
@@ -87,6 +88,10 @@ const ServicesContainerModule = new ContainerModule((bind: interfaces.Bind) => {
 
   bind<SkillService>(TYPES.SkillService)
     .to(SkillService)
+    .inSingletonScope()
+
+  bind<TalkService>(TYPES.TalkService)
+    .to(TalkService)
     .inSingletonScope()
 })
 
